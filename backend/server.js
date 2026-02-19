@@ -28,12 +28,12 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // Routes
-app.use('/api/clients/auth', require('./routes/clientAuth'));
-app.use('/api/clients', clientRoutes);
-app.use('/api/contacts', contactRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/about', aboutRoutes);
+// app.use('/api/clients/auth', require('./routes/clientAuth'));
+// app.use('/api/clients', clientRoutes);
+// app.use('/api/contacts', contactRoutes);
+// app.use('/api/services', serviceRoutes);
+// app.use('/api/projects', projectRoutes);
+// app.use('/api/about', aboutRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
