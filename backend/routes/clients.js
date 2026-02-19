@@ -51,7 +51,7 @@ router.get('/:id', async (req, res) => {
 // @access  Public
 router.post('/', async (req, res) => {
   try {
-    const { name, email, phone, company, address, status } = req.body;
+    const { name, email, phone, company, address, status, password } = req.body;
 
     // Check if client with email already exists
     const existingClient = await Client.findOne({ email });
@@ -66,6 +66,7 @@ router.post('/', async (req, res) => {
       company,
       address,
       status: status || 'active',
+      password: password || '123456', // Default password if not provided (should be required on frontend)
     });
 
     const savedClient = await client.save();

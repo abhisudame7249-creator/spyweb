@@ -1,18 +1,37 @@
 const express = require('express');
 const router = express.Router();
 const Project = require('../models/Project');
+const { protectClient } = require('../middleware/authClient');
+
+// @route   GET /api/projects/my
+// @desc    Get logged-in client's projects
+// @access  Private (Client)
+router.get('/my', protectClient, async (req, res) => {
+  try {
+    const projects = await Project.find({ client: req.client._id }).sort({ updatedAt: -1 });
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 // @route   GET /api/projects
-// @desc    Get all projects
+// @desc    Get all public projects
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { active } = req.query;
+    const { active, publicOnly } = req.query;
     let query = {};
 
     // Filter by active status
     if (active !== undefined) {
       query.active = active === 'true';
+    }
+    
+    // Default to public projects unless specified otherwise (e.g. for admin usage you might want all)
+    // For now, let's just return what matches query. If 'publicOnly' is true, filter by isPublic.
+    if (publicOnly === 'true') {
+        query.isPublic = true;
     }
 
     const projects = await Project.find(query).sort({ order: 1, createdAt: -1 });
@@ -33,6 +52,9 @@ router.get('/:id', async (req, res) => {
     }
     res.json(project);
   } catch (error) {
+    if (error.kind === 'ObjectId') {
+        return res.status(404).json({ message: 'Project not found' });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -42,7 +64,10 @@ router.get('/:id', async (req, res) => {
 // @access  Admin
 router.post('/', async (req, res) => {
   try {
-    const { title, description, imageUrl, technologies, order, active } = req.body;
+    const { 
+        title, description, imageUrl, technologies, order, active, 
+        client, progress, status, startDate, endDate, isPublic 
+    } = req.body;
 
     const project = new Project({
       title,
@@ -51,6 +76,12 @@ router.post('/', async (req, res) => {
       technologies: technologies || [],
       order: order || 0,
       active: active !== undefined ? active : true,
+      client: client || null,
+      progress: progress || 0,
+      status: status || 'Planning',
+      startDate,
+      endDate,
+      isPublic: isPublic !== undefined ? isPublic : true
     });
 
     const savedProject = await project.save();
@@ -68,11 +99,17 @@ router.post('/', async (req, res) => {
 // @access  Admin
 router.put('/:id', async (req, res) => {
   try {
-    const { title, description, imageUrl, technologies, order, active } = req.body;
+    const { 
+        title, description, imageUrl, technologies, order, active,
+        client, progress, status, startDate, endDate, isPublic
+    } = req.body;
 
     const project = await Project.findByIdAndUpdate(
       req.params.id,
-      { title, description, imageUrl, technologies, order, active },
+      { 
+          title, description, imageUrl, technologies, order, active,
+          client: client || null, progress, status, startDate, endDate, isPublic
+      },
       { new: true, runValidators: true }
     );
 

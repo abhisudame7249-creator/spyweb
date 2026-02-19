@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Binary files
+*.exe
+*.zip
+*.rar
+*.7z
+
+# Environment files
+.env
+.env.local
+.env.*.local

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const clientSchema = new mongoose.Schema(
   {
@@ -14,14 +15,18 @@ const clientSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    password: {
+      type: String,
+      required: [true, 'Password is required'],
+      minlength: 6,
+      select: false, // Don't return password by default
+    },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
       trim: true,
     },
     company: {
       type: String,
-      required: [true, 'Company name is required'],
       trim: true,
     },
     address: {
@@ -32,12 +37,26 @@ const clientSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['active', 'inactive'],
-      default: 'active',
+      default: 'active', // Default status for new signups
     },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
   }
 );
+
+// Hash password before saving
+clientSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Compare password method
+clientSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 module.exports = mongoose.model('Client', clientSchema);
